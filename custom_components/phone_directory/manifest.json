@@ -2,7 +2,7 @@
   "domain": "phone_directory",
   "name": "Phone Directory",
   "version": "0.1.0",
-  "documentation": "https://github.com/YOUR_GITHUB_USERNAME/ha-phone-directory",
+  "documentation": "https://github.com/jeffcrum1/ha-phone-directory",
   "requirements": [],
   "codeowners": [],
   "config_flow": true
