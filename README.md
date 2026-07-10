@@ -1,2 +1,14 @@
-# ha-phone-directory
-A Home Assistant custom integration that maintains a central phone directory and synchronizes it with VoIP.ms and Grandstream XML phonebooks.
+# Phone Directory
+
+A Home Assistant custom integration for managing a household phone directory.
+
+## Purpose
+
+Maintain a single phone directory in Home Assistant and synchronize it with:
+
+- Grandstream XML phonebooks
+- VoIP.ms phonebook API
+
+## Status
+
+Early development.
