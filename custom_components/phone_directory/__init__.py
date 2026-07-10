@@ -16,6 +16,6 @@ async def async_setup_entry(
 ) -> bool:
     """Set up Phone Directory from a config entry."""
 
-    LOGGER.info("Phone Directory setup complete")
+    LOGGER.warning("Phone Directory setup complete")
 
     return True
