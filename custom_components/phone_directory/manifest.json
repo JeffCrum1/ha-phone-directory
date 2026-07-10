@@ -1,1 +1,8 @@
-
+{
+  "domain": "phone_directory",
+  "name": "Phone Directory",
+  "version": "0.1.0",
+  "documentation": "https://github.com/JeffCrum1/ha-phone-directory",
+  "requirements": [],
+  "codeowners": []
+}
