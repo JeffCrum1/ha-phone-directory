@@ -4,7 +4,7 @@ from pathlib import Path
 
 from .models import Contact
 
-DATA_FILE = Path(__file__).parent / "contacts.json"
+DATA_FILE = Path(__file__).parent.parent / "contacts.json"
 
 
 def load_contacts() -> list[Contact]:
