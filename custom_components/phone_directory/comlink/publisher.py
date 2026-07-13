@@ -7,6 +7,6 @@ def publish_contacts(contacts):
 
     manager = OutputManager()
 
-    manager.add_output(GrandstreamOutput("/tmp/phonebook.xml"))
+    manager.add_output(GrandstreamOutput("/config/phone_directory_test.xml"))
 
     manager.publish_all(contacts)
