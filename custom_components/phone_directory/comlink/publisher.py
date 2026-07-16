@@ -1,5 +1,6 @@
 from .output_manager import OutputManager
-from .outputs.grandstream import GrandstreamOutput
+from .output_factory import create_output
+from .output_models import OutputConfig
 
 
 def publish_contacts(contacts):
@@ -7,6 +8,16 @@ def publish_contacts(contacts):
 
     manager = OutputManager()
 
-    manager.add_output(GrandstreamOutput("/config/phone_directory_test.xml"))
+    outputs = [
+        OutputConfig(
+            output_type="grandstream",
+            data={
+                "path": "/tmp/phonebook.xml",
+            },
+        ),
+    ]
+
+    for output_config in outputs:
+        manager.add_output(create_output(output_config))
 
     manager.publish_all(contacts)
