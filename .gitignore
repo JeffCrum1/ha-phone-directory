@@ -5,3 +5,4 @@ __pycache__/
 .vscode/
 .venv/
 contacts.json
+outputs.json
