@@ -10,9 +10,10 @@ def publish_contacts(contacts):
 
     outputs = [
         OutputConfig(
+            output_id="grandstream-home",
             output_type="grandstream",
             data={
-                "path": "/tmp/phonebook.xml",
+                "directory": "/tmp/grandstream/home",
             },
         ),
     ]

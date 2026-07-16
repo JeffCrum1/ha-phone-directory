@@ -6,14 +6,19 @@ from xml.dom import minidom
 class GrandstreamOutput:
     """Generate and publish a Grandstream XML phonebook."""
 
-    def __init__(self, filename: str):
+    def __init__(self, directory: str):
         """Initialize the output."""
-        self.filename = Path(filename)
+        self.filename = Path(directory) / "phonebook.xml"
 
     def publish(self, contacts) -> None:
         """Generate XML and write it to the destination file."""
 
         xml = self._generate_xml(contacts)
+
+        self.filename.parent.mkdir(
+            parents=True,
+            exist_ok=True,
+        )
 
         self.filename.write_text(
             xml,

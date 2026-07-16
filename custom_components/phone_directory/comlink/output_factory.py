@@ -6,6 +6,6 @@ def create_output(config: OutputConfig):
     """Create an output instance from configuration."""
 
     if config.output_type == "grandstream":
-        return GrandstreamOutput(config.data["path"])
+        return GrandstreamOutput(config.data["directory"])
 
     raise ValueError(f"Unknown output type: {config.output_type}")
