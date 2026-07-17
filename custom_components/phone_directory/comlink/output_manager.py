@@ -32,8 +32,10 @@ class OutputManager:
                     len(contacts),
                 )
 
-            except Exception:
-                LOGGER.exception(
-                    "Phone Directory: publish failed for %s",
+            except Exception as err:
+                LOGGER.error(
+                    "Phone Directory: publish failed for %s: %s",
                     output,
+                    err,
+                    exc_info=True,
                 )

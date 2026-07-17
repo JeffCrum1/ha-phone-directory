@@ -66,8 +66,10 @@ class VoipmsOutput:
 
         result = json.loads(data)
 
-        if result.get("status") != "success":
+        if not result or result.get("status") != "success":
             raise RuntimeError(f"VoIP.ms API error: {result.get('status')}")
+
+        return result
 
     def _get_phonebook(self) -> list[dict]:
         """Retrieve current VoIP.ms phonebook entries."""
