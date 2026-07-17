@@ -1,0 +1,3 @@
+publish:
+  name: Publish Phone Directory
+  description: Publish the current phone directory to all configured outputs.

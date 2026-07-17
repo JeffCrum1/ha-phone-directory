@@ -23,8 +23,13 @@ class HomeAssistant:
     pass
 
 
+class ServiceCall:
+    pass
+
+
 config_entries.ConfigEntry = ConfigEntry
 core.HomeAssistant = HomeAssistant
+core.ServiceCall = ServiceCall
 
 sys.modules["homeassistant"] = homeassistant
 sys.modules["homeassistant.config_entries"] = config_entries
