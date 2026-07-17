@@ -1,5 +1,12 @@
 import sys
 import types
+from pathlib import Path
+
+
+sys.path.insert(
+    0,
+    str(Path(__file__).parents[2]),
+)
 
 
 # Fake Home Assistant imports for standalone testing
@@ -24,23 +31,13 @@ sys.modules["homeassistant.config_entries"] = config_entries
 sys.modules["homeassistant.core"] = core
 
 
-from custom_components.phone_directory.comlink.storage import load_contacts
-from custom_components.phone_directory.comlink.publisher import publish_contacts
+from custom_components.phone_directory.coordinator import publish_everything
 
 
 print()
-print("Loading contacts...")
+print("Publishing everything...")
 
-contacts = load_contacts()
-
-print("Loaded contacts:")
-print(contacts)
-
-
-print()
-print("Publishing to configured outputs...")
-
-publish_contacts(contacts)
+publish_everything()
 
 
 print()
