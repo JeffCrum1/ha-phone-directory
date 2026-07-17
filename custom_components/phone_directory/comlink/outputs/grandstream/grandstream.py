@@ -10,6 +10,9 @@ class GrandstreamOutput:
         """Initialize the output."""
         self.filename = Path(directory) / "phonebook.xml"
 
+    def __str__(self) -> str:
+        return f"Grandstream({self.filename})"
+
     def publish(self, contacts) -> None:
         """Generate XML and write it to the destination file."""
 

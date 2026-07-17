@@ -18,6 +18,9 @@ class VoipmsOutput:
         self.api_username = api_username
         self.api_password = api_password
 
+    def __str__(self) -> str:
+        return "VoIP.ms"
+
     def publish(self, contacts) -> None:
         """Replace the VoIP.ms phonebook with current contacts."""
 
@@ -64,9 +67,7 @@ class VoipmsOutput:
         result = json.loads(data)
 
         if result.get("status") != "success":
-            raise RuntimeError(f"VoIP.ms API error: {result}")
-
-        return result
+            raise RuntimeError(f"VoIP.ms API error: {result.get('status')}")
 
     def _get_phonebook(self) -> list[dict]:
         """Retrieve current VoIP.ms phonebook entries."""

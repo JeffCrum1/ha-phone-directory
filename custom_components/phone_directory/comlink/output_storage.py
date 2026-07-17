@@ -4,7 +4,6 @@ from pathlib import Path
 
 from .output_models import OutputConfig
 
-
 DATA_FILE = Path("/config/outputs.json")
 
 
