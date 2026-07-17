@@ -1,6 +1,7 @@
 from .output_models import OutputConfig
 from .outputs.grandstream import GrandstreamOutput
 from .outputs.debug import DebugOutput
+from .outputs.voipms import VoipmsOutput
 
 
 def create_output(config: OutputConfig):
@@ -8,6 +9,12 @@ def create_output(config: OutputConfig):
 
     if config.output_type == "grandstream":
         return GrandstreamOutput(config.data["directory"])
+
+    if config.output_type == "voipms":
+        return VoipmsOutput(
+            config.data["api_username"],
+            config.data["api_password"],
+        )
 
     if config.output_type == "debug":
         return DebugOutput(config.data["name"])
