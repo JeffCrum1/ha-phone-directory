@@ -7,6 +7,7 @@ rsync -av --inplace --delete \
   --exclude '__pycache__/' \
   --exclude '*.pyc' \
   --exclude 'contacts.json' \
+  --exclude 'outputs.json' \
   /opt/git/homeassistant-custom/custom_components/phone_directory/ \
   /mnt/components/phone_directory/
 

@@ -5,7 +5,7 @@ from pathlib import Path
 from .output_models import OutputConfig
 
 
-DATA_FILE = Path(__file__).parent.parent.parent / "outputs.json"
+DATA_FILE = Path("/config/outputs.json")
 
 
 def load_outputs() -> list[OutputConfig]:
