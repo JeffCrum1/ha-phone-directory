@@ -4,7 +4,8 @@ from pathlib import Path
 
 from .output_models import OutputConfig
 
-DATA_FILE = Path("/config/outputs.json")
+DATA_DIR = Path("/config/phone_directory_data")
+DATA_FILE = DATA_DIR / "outputs.json"
 
 
 def load_outputs() -> list[OutputConfig]:
@@ -12,6 +13,11 @@ def load_outputs() -> list[OutputConfig]:
 
     if not DATA_FILE.exists():
         return []
+
+    DATA_DIR.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
 
     with open(DATA_FILE, "r", encoding="utf-8") as f:
         data = json.load(f)

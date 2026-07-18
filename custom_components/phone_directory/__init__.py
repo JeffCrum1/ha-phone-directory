@@ -12,6 +12,9 @@ from .coordinator import (
     delete_directory_contact,
     publish_everything,
 )
+from pathlib import Path
+
+DATA_DIR = Path("/config/phone_directory_data")
 
 LOGGER = logging.getLogger(__name__)
 
@@ -21,6 +24,11 @@ async def async_setup_entry(
     entry: ConfigEntry,
 ) -> bool:
     """Set up Phone Directory from a config entry."""
+
+    DATA_DIR.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
 
     async def async_publish_service(call: ServiceCall) -> None:
         """Publish the phone directory."""

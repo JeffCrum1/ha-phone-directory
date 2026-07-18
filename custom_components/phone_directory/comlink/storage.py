@@ -4,13 +4,19 @@ from pathlib import Path
 
 from .models import Contact
 
-DATA_FILE = Path("/config/contacts.json")
+DATA_DIR = Path("/config/phone_directory_data")
+DATA_FILE = DATA_DIR / "contacts.json"
 
 
 def load_contacts() -> list[Contact]:
     """Load all contacts from storage."""
     if not DATA_FILE.exists():
         return []
+
+    DATA_DIR.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
 
     with open(DATA_FILE, "r", encoding="utf-8") as f:
         data = json.load(f)
