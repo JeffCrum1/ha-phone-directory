@@ -1,3 +1,66 @@
 publish:
   name: Publish Phone Directory
-  description: Publish the current phone directory to all configured outputs.
+  description: Publish the phone directory to all configured outputs.
+
+add_contact:
+  name: Add Contact
+  description: Add a contact to the phone directory and publish the changes.
+
+  fields:
+    name:
+      name: Name
+      description: Contact name.
+      required: true
+      example: Jane Smith - Cell
+      selector:
+        text:
+
+    number:
+      name: Phone Number
+      description: Phone number without formatting.
+      required: true
+      example: "5551234567"
+      selector:
+        text:
+
+change_contact:
+  name: Change Contact
+  description: Update an existing contact and publish the changes.
+
+  fields:
+    old_name:
+      name: Existing Name
+      description: Name of the contact to change.
+      required: true
+      example: Jane Smith - Cell
+      selector:
+        text:
+
+    new_name:
+      name: New Name
+      description: Updated contact name.
+      required: true
+      example: Jane Smith - Mobile
+      selector:
+        text:
+
+    new_number:
+      name: New Phone Number
+      description: Updated phone number without formatting.
+      required: true
+      example: "5559876543"
+      selector:
+        text:
+
+delete_contact:
+  name: Delete Contact
+  description: Remove a contact from the phone directory and publish the changes.
+
+  fields:
+    name:
+      name: Name
+      description: Contact name to remove.
+      required: true
+      example: Jane Smith - Cell
+      selector:
+        text:
