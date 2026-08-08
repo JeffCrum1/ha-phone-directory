@@ -1,10 +1,12 @@
 """Phone Directory integration."""
 
 import logging
+from pathlib import Path
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, ServiceCall
 
+from .config_entry_manager import ConfigEntryManager
 from .const import DOMAIN
 from .coordinator import (
     add_directory_contact,
@@ -12,7 +14,6 @@ from .coordinator import (
     delete_directory_contact,
     publish_everything,
 )
-from pathlib import Path
 
 DATA_DIR = Path("/config/phone_directory_data")
 
@@ -25,10 +26,18 @@ async def async_setup_entry(
 ) -> bool:
     """Set up Phone Directory from a config entry."""
 
+    hass.data.setdefault(DOMAIN, {})
+
+    config_manager = ConfigEntryManager(entry)
+
+    hass.data[DOMAIN][entry.entry_id] = config_manager
+
     DATA_DIR.mkdir(
         parents=True,
         exist_ok=True,
     )
+
+    outputs = config_manager.load_outputs()
 
     async def async_publish_service(call: ServiceCall) -> None:
         """Publish the phone directory."""
@@ -36,6 +45,7 @@ async def async_setup_entry(
         try:
             await hass.async_add_executor_job(
                 publish_everything,
+                outputs,
             )
         except Exception:
             LOGGER.exception(
@@ -50,6 +60,7 @@ async def async_setup_entry(
                 add_directory_contact,
                 call.data["name"],
                 call.data["number"],
+                outputs,
             )
         except ValueError as err:
             LOGGER.error(
@@ -64,6 +75,7 @@ async def async_setup_entry(
             await hass.async_add_executor_job(
                 delete_directory_contact,
                 call.data["name"],
+                outputs,
             )
         except ValueError as err:
             LOGGER.error(
@@ -80,6 +92,7 @@ async def async_setup_entry(
                 call.data["old_name"],
                 call.data["new_name"],
                 call.data["new_number"],
+                outputs,
             )
         except ValueError as err:
             LOGGER.error(

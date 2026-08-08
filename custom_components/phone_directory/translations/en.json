@@ -1,0 +1,25 @@
+{
+    "title": "Phone Directory",
+    "config": {
+        "step": {
+            "user": {
+                "title": "Phone Directory",
+                "description": "Configure your phone directory."
+            }
+        }
+    },
+    "options": {
+        "step": {
+            "init": {
+                "title": "Phone Directory Options",
+                "menu_options": {
+                    "add_output": "Add Output"
+                }
+            },
+            "add_output": {
+                "title": "Add Output",
+                "description": "Configure a phone directory output."
+            }
+        }
+    }
+}

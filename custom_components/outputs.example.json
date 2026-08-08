@@ -1,9 +1,0 @@
-[
-  {
-    "output_id": "grandstream-home",
-    "output_type": "grandstream",
-    "data": {
-      "directory": "/config/www/grandstream/home"
-    }
-  }
-]

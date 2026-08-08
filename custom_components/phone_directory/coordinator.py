@@ -13,12 +13,15 @@ from .comlink.storage import (
 LOGGER = logging.getLogger(__name__)
 
 
-def publish_everything() -> None:
-    """Load contacts and publish them to all configured outputs."""
+def publish_everything(outputs) -> None:
+    """Load contacts and publish them to configured outputs."""
 
     contacts = load_contacts()
 
-    publish_contacts(contacts)
+    publish_contacts(
+        outputs,
+        contacts,
+    )
 
     LOGGER.info(
         "Phone Directory: Published %s contacts",
@@ -29,6 +32,7 @@ def publish_everything() -> None:
 def add_directory_contact(
     name: str,
     number: str,
+    outputs,
 ) -> None:
     """Add a contact and publish updates."""
 
@@ -42,11 +46,12 @@ def add_directory_contact(
         name,
     )
 
-    publish_everything()
+    publish_everything(outputs)
 
 
 def delete_directory_contact(
     name: str,
+    outputs,
 ) -> None:
     """Delete a contact and publish updates."""
 
@@ -57,13 +62,14 @@ def delete_directory_contact(
         name,
     )
 
-    publish_everything()
+    publish_everything(outputs)
 
 
 def change_directory_contact(
     old_name: str,
     new_name: str,
     new_number: str,
+    outputs,
 ) -> None:
     """Change a contact and publish updates."""
 
@@ -79,4 +85,4 @@ def change_directory_contact(
         new_name,
     )
 
-    publish_everything()
+    publish_everything(outputs)

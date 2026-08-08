@@ -1,26 +1,27 @@
-"""Config flow for Phone Directory."""
+class PhoneDirectoryOptionsFlowHandler(
+    config_entries.OptionsFlow,
+):
+    """Handle Phone Directory options."""
 
-from homeassistant import config_entries
-from homeassistant.core import callback
+    def __init__(self, config_entry):
+        """Initialize options flow."""
 
-from .const import DOMAIN
+        self._config_entry = config_entry
 
+    async def async_step_init(self, user_input=None):
+        """Manage Phone Directory options."""
 
-class PhoneDirectoryConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
-    """Handle a config flow for Phone Directory."""
+        return self.async_show_menu(
+            step_id="init",
+            menu_options={
+                "add_output": "Add Output",
+            },
+        )
 
-    VERSION = 1
-
-    async def async_step_user(self, user_input=None):
-        """Handle the initial setup."""
-
-        if user_input is not None:
-            return self.async_create_entry(
-                title="Phone Directory",
-                data={},
-            )
+    async def async_step_add_output(self, user_input=None):
+        """Add an output."""
 
         return self.async_show_form(
-            step_id="user",
-            data_schema=None,
+            step_id="add_output",
+            data_schema=vol.Schema({}),
         )
