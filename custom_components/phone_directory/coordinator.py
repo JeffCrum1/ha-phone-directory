@@ -2,41 +2,39 @@
 
 import logging
 
-from .comlink.publisher import publish_contacts
-from .comlink.storage import (
+from .models import Contact
+from .storage import (
     add_contact,
     change_contact,
     delete_contact,
+    get_contact,
     load_contacts,
 )
 
 LOGGER = logging.getLogger(__name__)
 
 
-def publish_everything(outputs) -> None:
-    """Load contacts and publish them to configured outputs."""
+def get_directory_contacts() -> list[Contact]:
+    """Return all phone directory contacts."""
 
-    contacts = load_contacts()
+    return load_contacts()
 
-    publish_contacts(
-        outputs,
-        contacts,
-    )
 
-    LOGGER.info(
-        "Phone Directory: Published %s contacts",
-        len(contacts),
-    )
+def get_directory_contact(
+    contact_id: str,
+) -> Contact:
+    """Return a phone directory contact by ID."""
+
+    return get_contact(contact_id)
 
 
 def add_directory_contact(
     name: str,
     number: str,
-    outputs,
-) -> None:
-    """Add a contact and publish updates."""
+) -> Contact:
+    """Add a contact."""
 
-    add_contact(
+    contact = add_contact(
         name,
         number,
     )
@@ -46,43 +44,40 @@ def add_directory_contact(
         name,
     )
 
-    publish_everything(outputs)
+    return contact
 
 
 def delete_directory_contact(
-    name: str,
-    outputs,
+    contact_id: str,
 ) -> None:
-    """Delete a contact and publish updates."""
+    """Delete a contact."""
 
-    delete_contact(name)
+    delete_contact(
+        contact_id,
+    )
 
     LOGGER.info(
         "Phone Directory: Deleted contact %s",
-        name,
+        contact_id,
     )
-
-    publish_everything(outputs)
 
 
 def change_directory_contact(
-    old_name: str,
+    contact_id: str,
     new_name: str,
     new_number: str,
-    outputs,
-) -> None:
-    """Change a contact and publish updates."""
+) -> Contact:
+    """Change a contact."""
 
-    change_contact(
-        old_name,
+    contact = change_contact(
+        contact_id,
         new_name,
         new_number,
     )
 
     LOGGER.info(
-        "Phone Directory: Changed contact %s to %s",
-        old_name,
-        new_name,
+        "Phone Directory: Changed contact %s",
+        contact_id,
     )
 
-    publish_everything(outputs)
+    return contact

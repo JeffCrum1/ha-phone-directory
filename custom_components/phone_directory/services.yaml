@@ -4,7 +4,7 @@ publish:
 
 add_contact:
   name: Add Contact
-  description: Add a contact to the phone directory and publish the changes.
+  description: Add a contact to the phone directory.
 
   fields:
     name:
@@ -25,27 +25,27 @@ add_contact:
 
 change_contact:
   name: Change Contact
-  description: Update an existing contact and publish the changes.
+  description: Update an existing contact in the phone directory.
 
   fields:
-    old_name:
-      name: Existing Name
-      description: Name of the contact to change.
+    contact_id:
+      name: Contact ID
+      description: Unique ID of the contact to change.
       required: true
-      example: Jane Smith - Cell
+      example: 66834426-c28f-475f-8295-9029f931032c
       selector:
         text:
 
-    new_name:
-      name: New Name
+    name:
+      name: Name
       description: Updated contact name.
       required: true
       example: Jane Smith - Mobile
       selector:
         text:
 
-    new_number:
-      name: New Phone Number
+    number:
+      name: Phone Number
       description: Updated phone number without formatting.
       required: true
       example: "5559876543"
@@ -54,13 +54,13 @@ change_contact:
 
 delete_contact:
   name: Delete Contact
-  description: Remove a contact from the phone directory and publish the changes.
+  description: Remove a contact from the phone directory.
 
   fields:
-    name:
-      name: Name
-      description: Contact name to remove.
+    contact_id:
+      name: Contact ID
+      description: Unique ID of the contact to remove.
       required: true
-      example: Jane Smith - Cell
+      example: 66834426-c28f-475f-8295-9029f931032c
       selector:
         text:
