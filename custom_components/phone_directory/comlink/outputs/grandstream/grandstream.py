@@ -6,9 +6,14 @@ from xml.dom import minidom
 class GrandstreamOutput:
     """Generate and publish a Grandstream XML phonebook."""
 
-    def __init__(self, directory: str):
+    def __init__(
+        self,
+        directory: str,
+        filename: str = "phonebook.xml",
+    ):
         """Initialize the output."""
-        self.filename = Path(directory) / "phonebook.xml"
+
+        self.filename = Path(directory) / filename
 
     def __str__(self) -> str:
         return f"Grandstream({self.filename})"
@@ -43,9 +48,14 @@ class GrandstreamOutput:
             phone = ET.SubElement(contact_elem, "Phone")
             ET.SubElement(phone, "phonenumber").text = "1" + contact.number
 
-        rough_xml = ET.tostring(root, encoding="unicode")
+        rough_xml = ET.tostring(
+            root,
+            encoding="unicode",
+        )
 
-        pretty_xml = minidom.parseString(rough_xml).toprettyxml(
+        pretty_xml = minidom.parseString(
+            rough_xml,
+        ).toprettyxml(
             indent="    ",
             encoding=None,
         )

@@ -1,9 +1,31 @@
 from dataclasses import dataclass
+from typing import Any
 
 
-@dataclass
+@dataclass(frozen=True)
+class OutputField:
+    """Describe a configuration field for an output."""
+
+    key: str
+    label: str
+    type: str
+    required: bool = True
+    secret: bool = False
+    default: Any = None
+
+
+@dataclass(frozen=True)
+class OutputDefinition:
+    """Describe an available Comlink output."""
+
+    output_type: str
+    label: str
+    fields: tuple[OutputField, ...] = ()
+
+
+@dataclass(frozen=True)
 class OutputConfig:
-    """Configuration for a phone directory output."""
+    """Configured output."""
 
     output_id: str
     output_type: str
