@@ -1,6 +1,8 @@
 import importlib
 import pkgutil
 
+from homeassistant.core import HomeAssistant
+
 from . import outputs
 from .output_models import OutputConfig, OutputDefinition
 
@@ -30,6 +32,16 @@ def get_output_definitions() -> list[OutputDefinition]:
     return sorted(
         definitions,
         key=lambda definition: definition.label.lower(),
+    )
+
+
+async def async_get_output_definitions(
+    hass: HomeAssistant,
+) -> list[OutputDefinition]:
+    """Discover output definitions without blocking Home Assistant."""
+
+    return await hass.async_add_executor_job(
+        get_output_definitions,
     )
 
 

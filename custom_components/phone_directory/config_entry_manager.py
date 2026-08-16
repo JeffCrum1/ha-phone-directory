@@ -35,6 +35,7 @@ class ConfigEntryManager:
         self,
         name: str,
         output_type: str,
+        data: dict,
     ) -> None:
         """Add an output."""
 
@@ -46,13 +47,14 @@ class ConfigEntryManager:
             )
         ]
 
-        outputs.append(
-            {
-                "output_id": str(uuid4()),
-                "name": name,
-                "output_type": output_type,
-            }
-        )
+        output = {
+            "output_id": str(uuid4()),
+            "name": name,
+            "output_type": output_type,
+            **data,
+        }
+
+        outputs.append(output)
 
         self._hass.config_entries.async_update_entry(
             self._config_entry,
@@ -66,10 +68,12 @@ class ConfigEntryManager:
         self,
         output_id: str,
         name: str,
+        data: dict,
     ) -> None:
         """Update an output."""
 
         outputs = []
+        found = False
 
         for existing_output in self._config_entry.data.get(
             "outputs",
@@ -79,10 +83,42 @@ class ConfigEntryManager:
 
             if output["output_id"] == output_id:
                 output["name"] = name
+                output.update(data)
+                found = True
 
             outputs.append(output)
 
-        if not any(output["output_id"] == output_id for output in outputs):
+        if not found:
+            raise ValueError(
+                f"Output not found: {output_id}",
+            )
+
+        self._hass.config_entries.async_update_entry(
+            self._config_entry,
+            data={
+                **self._config_entry.data,
+                "outputs": outputs,
+            },
+        )
+
+    async def async_delete_output(
+        self,
+        output_id: str,
+    ) -> None:
+        """Delete an output."""
+
+        existing_outputs = self._config_entry.data.get(
+            "outputs",
+            [],
+        )
+
+        outputs = [
+            dict(output)
+            for output in existing_outputs
+            if output["output_id"] != output_id
+        ]
+
+        if len(outputs) == len(existing_outputs):
             raise ValueError(
                 f"Output not found: {output_id}",
             )

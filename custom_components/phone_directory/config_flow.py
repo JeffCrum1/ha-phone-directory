@@ -6,6 +6,7 @@ from homeassistant.helpers.selector import (
     SelectSelectorConfig,
 )
 
+from .comlink.output_factory import async_get_output_definitions
 from .config_entry_manager import ConfigEntryManager
 from .const import DOMAIN
 
@@ -24,7 +25,9 @@ class PhoneDirectoryConfigFlow(
         if user_input is not None:
             return self.async_create_entry(
                 title="Phone Directory",
-                data={},
+                data={
+                    "outputs": [],
+                },
             )
 
         return self.async_show_form(
@@ -48,6 +51,7 @@ class PhoneDirectoryOptionsFlowHandler(
         """Initialize options flow."""
 
         self._selected_output_id = None
+        self._selected_output_type = None
 
     async def async_step_init(self, user_input=None):
         """Manage Phone Directory options."""
@@ -75,7 +79,7 @@ class PhoneDirectoryOptionsFlowHandler(
         self,
         user_input=None,
     ):
-        """Select or configure an output."""
+        """Select an existing output."""
 
         config_manager: ConfigEntryManager = self.hass.data[DOMAIN][
             self.config_entry.entry_id
@@ -86,94 +90,327 @@ class PhoneDirectoryOptionsFlowHandler(
         if not outputs:
             return await self.async_step_init()
 
-        if self._selected_output_id is not None:
-            output = next(
-                (
-                    output
-                    for output in outputs
-                    if output.output_id == self._selected_output_id
-                ),
-                None,
-            )
-
-            if output is None:
-                self._selected_output_id = None
-                return await self.async_step_init()
-
+        if self._selected_output_id is None:
             if user_input is not None:
-                await config_manager.async_update_output(
-                    output.output_id,
-                    name=user_input["name"],
+                self._selected_output_id = user_input["output_id"]
+
+                return await self.async_step_output_actions()
+
+            options = [
+                SelectOptionDict(
+                    value=output.output_id,
+                    label=output.data["name"],
                 )
-
-                self._selected_output_id = None
-
-                return await self.async_step_init()
+                for output in outputs
+            ]
 
             return self.async_show_form(
                 step_id="configure_output",
                 data_schema=vol.Schema(
                     {
-                        vol.Required(
-                            "name",
-                            default=output.data["name"],
-                        ): str,
+                        vol.Required("output_id"): SelectSelector(
+                            SelectSelectorConfig(
+                                options=options,
+                                mode="dropdown",
+                            )
+                        ),
                     }
                 ),
-                description_placeholders={
-                    "output_type": output.output_type,
-                },
             )
+
+        return await self.async_step_output_actions()
+
+    async def async_step_output_actions(self, user_input=None):
+        """Choose what to do with an existing output."""
+
+        config_manager: ConfigEntryManager = self.hass.data[DOMAIN][
+            self.config_entry.entry_id
+        ]
+
+        outputs = config_manager.load_outputs()
+
+        output = next(
+            (
+                output
+                for output in outputs
+                if output.output_id == self._selected_output_id
+            ),
+            None,
+        )
+
+        if output is None:
+            self._selected_output_id = None
+            return await self.async_step_init()
 
         if user_input is not None:
-            self._selected_output_id = user_input["output_id"]
+            if user_input["action"] == "configure":
+                return await self.async_step_configure_existing_output()
 
-            return await self.async_step_configure_output()
+            if user_input["action"] == "delete":
+                return await self.async_step_delete_output()
 
-        options = [
-            SelectOptionDict(
-                value=output.output_id,
-                label=output.data["name"],
+        return self.async_show_form(
+            step_id="output_actions",
+            data_schema=vol.Schema(
+                {
+                    vol.Required("action"): SelectSelector(
+                        SelectSelectorConfig(
+                            options=[
+                                SelectOptionDict(
+                                    value="configure",
+                                    label="Configure Output",
+                                ),
+                                SelectOptionDict(
+                                    value="delete",
+                                    label="Delete Output",
+                                ),
+                            ],
+                            mode="list",
+                        )
+                    ),
+                }
+            ),
+            description_placeholders={
+                "output_name": output.data["name"],
+            },
+        )
+
+    async def async_step_configure_existing_output(
+        self,
+        user_input=None,
+    ):
+        """Configure an existing output."""
+
+        config_manager: ConfigEntryManager = self.hass.data[DOMAIN][
+            self.config_entry.entry_id
+        ]
+
+        outputs = config_manager.load_outputs()
+
+        output = next(
+            (
+                output
+                for output in outputs
+                if output.output_id == self._selected_output_id
+            ),
+            None,
+        )
+
+        if output is None:
+            self._selected_output_id = None
+            return await self.async_step_init()
+
+        definitions = await async_get_output_definitions(
+            self.hass,
+        )
+
+        definition = next(
+            (
+                definition
+                for definition in definitions
+                if definition.output_type == output.output_type
+            ),
+            None,
+        )
+
+        if definition is None:
+            self._selected_output_id = None
+            return await self.async_step_init()
+
+        if user_input is not None:
+            output_data = {
+                key: value for key, value in user_input.items() if key != "name"
+            }
+
+            await config_manager.async_update_output(
+                output.output_id,
+                name=user_input["name"],
+                data=output_data,
             )
-            for output in outputs
+
+            self._selected_output_id = None
+
+            return await self.async_step_init()
+
+        schema = {
+            vol.Required(
+                "name",
+                default=output.data["name"],
+            ): str,
+        }
+
+        for field in definition.fields:
+            current_value = output.data.get(
+                field.key,
+                field.default,
+            )
+
+            field_schema = (
+                vol.Required(
+                    field.key,
+                    default=current_value,
+                )
+                if field.required
+                else vol.Optional(
+                    field.key,
+                    default=current_value,
+                )
+            )
+
+            schema[field_schema] = str
+
+        return self.async_show_form(
+            step_id="configure_existing_output",
+            data_schema=vol.Schema(schema),
+            description_placeholders={
+                "output_type": definition.label,
+            },
+        )
+
+    async def async_step_delete_output(self, user_input=None):
+        """Confirm deletion of an output."""
+
+        config_manager: ConfigEntryManager = self.hass.data[DOMAIN][
+            self.config_entry.entry_id
+        ]
+
+        outputs = config_manager.load_outputs()
+
+        output = next(
+            (
+                output
+                for output in outputs
+                if output.output_id == self._selected_output_id
+            ),
+            None,
+        )
+
+        if output is None:
+            self._selected_output_id = None
+            return await self.async_step_init()
+
+        if user_input is not None:
+            await config_manager.async_delete_output(
+                output.output_id,
+            )
+
+            self._selected_output_id = None
+
+            return await self.async_step_init()
+
+        return self.async_show_form(
+            step_id="delete_output",
+            data_schema=vol.Schema({}),
+            description_placeholders={
+                "output_name": output.data["name"],
+            },
+        )
+
+    async def async_step_add_output(self, user_input=None):
+        """Select an output type to add."""
+
+        definitions = await async_get_output_definitions(
+            self.hass,
+        )
+
+        if user_input is not None:
+            self._selected_output_type = user_input["output_type"]
+
+            return await self.async_step_configure_new_output()
+
+        output_options = [
+            SelectOptionDict(
+                value=definition.output_type,
+                label=definition.label,
+            )
+            for definition in definitions
         ]
 
         return self.async_show_form(
-            step_id="configure_output",
+            step_id="add_output",
             data_schema=vol.Schema(
                 {
-                    vol.Required("output_id"): SelectSelector(
+                    vol.Required("output_type"): SelectSelector(
                         SelectSelectorConfig(
-                            options=options,
+                            options=output_options,
+                            mode="dropdown",
                         )
                     ),
                 }
             ),
         )
 
-    async def async_step_add_output(self, user_input=None):
-        """Add an output."""
+    async def async_step_configure_new_output(
+        self,
+        user_input=None,
+    ):
+        """Configure a new output."""
+
+        if self._selected_output_type is None:
+            return await self.async_step_add_output()
+
+        definitions = await async_get_output_definitions(
+            self.hass,
+        )
+
+        definition = next(
+            (
+                definition
+                for definition in definitions
+                if definition.output_type == self._selected_output_type
+            ),
+            None,
+        )
+
+        if definition is None:
+            self._selected_output_type = None
+            return await self.async_step_add_output()
 
         if user_input is not None:
             config_manager: ConfigEntryManager = self.hass.data[DOMAIN][
                 self.config_entry.entry_id
             ]
 
+            output_data = {
+                key: value for key, value in user_input.items() if key != "name"
+            }
+
             await config_manager.async_add_output(
                 name=user_input["name"],
-                output_type="grandstream",
+                output_type=definition.output_type,
+                data=output_data,
             )
+
+            self._selected_output_type = None
 
             return await self.async_step_init()
 
+        schema = {
+            vol.Required(
+                "name",
+                default=definition.label,
+            ): str,
+        }
+
+        for field in definition.fields:
+            field_schema = (
+                vol.Required(
+                    field.key,
+                    default=field.default,
+                )
+                if field.required
+                else vol.Optional(
+                    field.key,
+                    default=field.default,
+                )
+            )
+
+            schema[field_schema] = str
+
         return self.async_show_form(
-            step_id="add_output",
-            data_schema=vol.Schema(
-                {
-                    vol.Required(
-                        "name",
-                        default="House Phones",
-                    ): str,
-                }
-            ),
+            step_id="configure_new_output",
+            data_schema=vol.Schema(schema),
+            description_placeholders={
+                "output_type": definition.label,
+            },
         )
