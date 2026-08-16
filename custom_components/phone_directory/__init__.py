@@ -28,7 +28,10 @@ async def async_setup_entry(
 
     hass.data.setdefault(DOMAIN, {})
 
-    config_manager = ConfigEntryManager(entry)
+    config_manager = ConfigEntryManager(
+        hass,
+        entry,
+    )
 
     hass.data[DOMAIN][entry.entry_id] = config_manager
 

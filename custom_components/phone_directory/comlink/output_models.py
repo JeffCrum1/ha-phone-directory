@@ -14,7 +14,7 @@ class OutputConfig:
         """Create an OutputConfig from configuration data."""
 
         return cls(
-            output_id=config["name"],
+            output_id=config["output_id"],
             output_type=config["output_type"],
             data=config,
         )
