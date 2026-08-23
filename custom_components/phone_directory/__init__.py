@@ -13,6 +13,7 @@ from .coordinator import (
     add_directory_contact,
     change_directory_contact,
     delete_directory_contact,
+    publish_directory,
 )
 
 DATA_DIR = Path("/config/phone_directory_data")
@@ -39,6 +40,21 @@ async def async_setup_entry(
         parents=True,
         exist_ok=True,
     )
+
+    async def async_publish_service(call: ServiceCall) -> None:
+        """Publish the phone directory."""
+
+        outputs = config_manager.load_outputs()
+
+        try:
+            await hass.async_add_executor_job(
+                publish_directory,
+                outputs,
+            )
+        except Exception:
+            LOGGER.exception(
+                "Phone Directory: unexpected publish failure",
+            )
 
     async def async_add_contact_service(call: ServiceCall) -> None:
         """Add a phone directory contact."""
@@ -84,6 +100,12 @@ async def async_setup_entry(
                 "Phone Directory: %s",
                 err,
             )
+
+    hass.services.async_register(
+        DOMAIN,
+        "publish",
+        async_publish_service,
+    )
 
     hass.services.async_register(
         DOMAIN,

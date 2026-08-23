@@ -2,6 +2,8 @@
 
 import logging
 
+from .comlink.output_models import OutputConfig
+from .comlink.publisher import publish_contacts
 from .models import Contact
 from .storage import (
     add_contact,
@@ -81,3 +83,21 @@ def change_directory_contact(
     )
 
     return contact
+
+
+def publish_directory(
+    outputs: list[OutputConfig],
+) -> None:
+    """Publish the current phone directory to all configured outputs."""
+
+    contacts = load_contacts()
+
+    publish_contacts(
+        outputs,
+        contacts,
+    )
+
+    LOGGER.info(
+        "Phone Directory: Published %s contacts",
+        len(contacts),
+    )

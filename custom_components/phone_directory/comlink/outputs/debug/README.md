@@ -1,53 +1,50 @@
 # Debug Output
 
-The Debug output is a development and testing output.
+The Debug output is a development and troubleshooting output for Comlink.
 
-It does not publish the Phone Directory to an external device or service.
-
-Instead, it records information about the directory received by the output through the logging system.
+It does not publish data to an external destination. Instead, it receives the same contact data that the other configured outputs receive and writes that data to the Home Assistant log.
 
 ## Purpose
 
-Debug exists to make the Comlink output pipeline easy to test without requiring an external destination.
+The Debug output provides a simple way to see exactly what Comlink is passing to an output without inspecting files, APIs, or external devices.
 
-It can be used to verify that:
+When debug logging is enabled for the Phone Directory integration, the Debug output logs:
 
-* An output is discovered correctly
-* An output can be configured
-* Comlink can construct the output
-* Contacts reach the output
-* The publish operation completes successfully
+- The Debug output name
+- The output ID
+- The number of contacts received
+- The complete list of contacts
+- Confirmation that publishing completed successfully
 
-## Configuration
+The Debug output uses normal `DEBUG` logging and relies on Home Assistant's built-in integration debug logging.
 
-Debug does not currently require any output-specific configuration fields.
+## Using the Debug Output
 
-The configured output name and ID are used to identify the output in log messages.
+The Debug output can remain configured permanently.
 
-## Publishing
+When troubleshooting the Phone Directory integration:
 
-When Comlink publishes to the Debug output, it logs:
+1. Enable debug logging for the Phone Directory integration in Home Assistant.
+2. Perform the operation being tested.
+3. Review the Home Assistant log or provide the relevant log output for troubleshooting.
+4. Disable debug logging when finished.
 
-* The output name
-* The output ID
-* The number of contacts received
-* The contacts received
-* A successful publication message
+There is no need to add or remove the Debug output when troubleshooting.
 
-No external data is transmitted.
+When debug logging is disabled, the Debug output produces no log messages.
 
-No files are created.
+## Design
 
-No external service is contacted.
+The Debug output follows the same Comlink output interface as production outputs such as Grandstream and VoIP.ms.
 
-## Intended Use
+It receives the current list of `Contact` objects through:
 
-Debug is primarily a development and troubleshooting tool.
+`publish(contacts)`
 
-It provides a safe destination for testing changes to the Comlink pipeline before testing against a real phone, service, or other external destination.
+This makes it useful for verifying the complete publishing pipeline:
 
-## Notes
+**Phone Directory storage → Coordinator → Comlink publisher → OutputManager → Debug output**
 
-Debug is intentionally implemented using the same output contract as production outputs.
+The Debug output does not modify contacts and does not affect other outputs.
 
-That makes it useful for testing Comlink itself as well as providing a simple reference implementation for developers adding new outputs.
+Production outputs are completely unaware of whether a Debug output is configured. The Debug output is simply another Comlink output that receives the same published data.

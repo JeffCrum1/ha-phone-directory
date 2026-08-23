@@ -29,6 +29,7 @@ def create_output(config: OutputConfig) -> VoipmsOutput:
     """Create a VoIP.ms output from configuration."""
 
     return OUTPUT_CLASS(
+        config.output_id,
         config.data["api_username"],
         config.data["api_password"],
     )

@@ -21,7 +21,7 @@ class DebugOutput:
         return f"Debug({self.name})"
 
     def publish(self, contacts) -> None:
-        """Log contacts received by this output."""
+        """Log everything received by this output."""
 
         LOGGER.debug(
             "Phone Directory: Debug output '%s' (%s) " "received %d contacts: %s",
