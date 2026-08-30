@@ -28,7 +28,7 @@ OUTPUT_CLASS = GrandstreamOutput
 def create_output(config: OutputConfig) -> GrandstreamOutput:
     """Create a Grandstream output from configuration."""
 
-    return OUTPUT_CLASS()
+    return OUTPUT_CLASS(config)
 
 
 __all__ = [

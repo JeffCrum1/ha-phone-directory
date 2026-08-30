@@ -2,12 +2,19 @@ import logging
 import xml.etree.ElementTree as ET
 from xml.dom import minidom
 
+from ...output_models import OutputConfig
+
 
 LOGGER = logging.getLogger(__name__)
 
 
 class GrandstreamOutput:
     """Grandstream pull-based output."""
+
+    def __init__(self, config: OutputConfig) -> None:
+        """Initialize the Grandstream output."""
+
+        self.config = config
 
     def __str__(self) -> str:
         return "Grandstream"
