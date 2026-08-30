@@ -1,77 +1,32 @@
 # Grandstream Output
 
-The Grandstream output publishes the Phone Directory as a Grandstream-compatible XML phonebook.
+The Grandstream output generates a Grandstream-compatible XML phonebook and writes it to the configured destination.
 
-It generates an XML file containing the current directory contacts.
+Grandstream reads the phonebook XML through a web link, so the output directory should be under Home Assistant's `/config/www` directory to make the generated `phonebook.xml` accessible over HTTP.
 
 ## Configuration
 
-The Grandstream output currently has two configuration fields.
+The Grandstream output requires:
 
-### Directory
+- **Directory** — Directory where the phonebook XML file will be written.
+- **Filename** — Name of the generated XML file.
 
-The directory where the phonebook file will be written.
+The default filename is:
 
-Example:
+`phonebook.xml`
 
-```text
-/config/www
-```
+## Output
 
-The directory is created automatically if it does not already exist.
+The generated file contains the current Phone Directory contacts in Grandstream's XML phonebook format.
 
-### Filename
+The output creates the destination directory if it does not already exist.
 
-The name of the generated phonebook file.
+## Design
 
-The default is:
+The Grandstream output follows the Comlink output interface:
 
-```text
-phonebook.xml
-```
+`publish(contacts)`
 
-If the filename is left at its default, a configuration such as:
+It receives the current list of `Contact` objects and generates the XML file from that data.
 
-```text
-Directory: /config/www
-Filename: phonebook.xml
-```
-
-produces:
-
-```text
-/config/www/phonebook.xml
-```
-
-The filename is configurable even though the current Grandstream setup normally uses `phonebook.xml`. This allows for future Grandstream models or configurations that may use a different filename.
-
-## Publishing
-
-Whenever the directory is published, Comlink generates a new XML document and writes it to the configured destination.
-
-The output creates the destination directory when necessary.
-
-## XML Format
-
-The generated document uses the Grandstream `AddressBook` format.
-
-Each Phone Directory contact is represented as a Grandstream contact with:
-
-* First name
-* Last name
-* Ringtone
-* Phone number
-
-The current implementation writes phone numbers with a leading `1`.
-
-## Requirements
-
-The Grandstream phone or phones must be configured to retrieve the generated XML phonebook from the location provided by this output.
-
-The Grandstream device configuration is outside the responsibility of Comlink.
-
-## Notes
-
-This output is intentionally responsible only for generating and publishing the Grandstream phonebook.
-
-Home Assistant does not need to know anything about the Grandstream XML format.
+The output does not manage contacts or determine when publishing occurs. Those responsibilities belong to the Phone Directory integration and Comlink publishing pipeline.

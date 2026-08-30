@@ -7,17 +7,17 @@ OUTPUT_DEFINITION = OutputDefinition(
     label="Grandstream",
     fields=(
         OutputField(
-            key="directory",
-            label="Directory",
+            key="userid",
+            label="User ID",
             type="string",
             required=True,
         ),
         OutputField(
-            key="filename",
-            label="Filename",
+            key="password",
+            label="Password",
             type="string",
-            required=False,
-            default="phonebook.xml",
+            required=True,
+            secret=True,
         ),
     ),
 )
@@ -28,13 +28,7 @@ OUTPUT_CLASS = GrandstreamOutput
 def create_output(config: OutputConfig) -> GrandstreamOutput:
     """Create a Grandstream output from configuration."""
 
-    return OUTPUT_CLASS(
-        config.data["directory"],
-        config.data.get(
-            "filename",
-            "phonebook.xml",
-        ),
-    )
+    return OUTPUT_CLASS()
 
 
 __all__ = [

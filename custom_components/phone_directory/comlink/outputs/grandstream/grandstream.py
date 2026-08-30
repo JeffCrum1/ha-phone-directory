@@ -1,52 +1,62 @@
+import logging
 import xml.etree.ElementTree as ET
-from pathlib import Path
 from xml.dom import minidom
 
 
+LOGGER = logging.getLogger(__name__)
+
+
 class GrandstreamOutput:
-    """Generate and publish a Grandstream XML phonebook."""
-
-    def __init__(
-        self,
-        directory: str,
-        filename: str = "phonebook.xml",
-    ):
-        """Initialize the output."""
-
-        self.filename = Path(directory) / filename
+    """Grandstream pull-based output."""
 
     def __str__(self) -> str:
-        return f"Grandstream({self.filename})"
+        return "Grandstream"
 
     def publish(self, contacts) -> None:
-        """Generate XML and write it to the destination file."""
+        """Handle a publish request for the Grandstream output."""
 
-        xml = self._generate_xml(contacts)
-
-        self.filename.parent.mkdir(
-            parents=True,
-            exist_ok=True,
+        LOGGER.debug(
+            "Phone Directory: no publish for Grandstream; "
+            "Grandstream retrieves the phonebook from the HTTP API",
         )
 
-        self.filename.write_text(
-            xml,
-            encoding="utf-8",
-        )
-
-    def _generate_xml(self, contacts) -> str:
+    def render(self, contacts) -> str:
         """Generate Grandstream XML from contacts."""
 
         root = ET.Element("AddressBook")
 
         for contact in contacts:
-            contact_elem = ET.SubElement(root, "Contact")
+            contact_elem = ET.SubElement(
+                root,
+                "Contact",
+            )
 
-            ET.SubElement(contact_elem, "FirstName").text = contact.name
-            ET.SubElement(contact_elem, "LastName").text = ""
-            ET.SubElement(contact_elem, "Ringtone").text = "0"
+            ET.SubElement(
+                contact_elem,
+                "FirstName",
+            ).text = contact.name
 
-            phone = ET.SubElement(contact_elem, "Phone")
-            ET.SubElement(phone, "phonenumber").text = "1" + contact.number
+            ET.SubElement(
+                contact_elem,
+                "LastName",
+            ).text = ""
+
+            ET.SubElement(
+                contact_elem,
+                "Ringtone",
+            ).text = "0"
+
+            phone = ET.SubElement(
+                contact_elem,
+                "Phone",
+            )
+
+            ET.SubElement(
+                phone,
+                "phonenumber",
+            ).text = (
+                "1" + contact.number
+            )
 
         rough_xml = ET.tostring(
             root,

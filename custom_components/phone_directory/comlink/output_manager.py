@@ -15,16 +15,32 @@ class OutputManager:
         self.outputs.append(output)
 
     def publish_all(self, contacts) -> None:
-        """Publish contacts to all outputs."""
+        """Publish contacts to all outputs that support publishing."""
 
         for output in self.outputs:
+            LOGGER.debug(
+                "Phone Directory: output diagnostic: type=%s, repr=%r, has_publish=%s",
+                type(output),
+                output,
+                hasattr(output, "publish"),
+            )
+
+            publish = getattr(output, "publish", None)
+
+            if publish is None:
+                LOGGER.debug(
+                    "Phone Directory: output %s does not support publishing",
+                    output,
+                )
+                continue
+
             try:
                 LOGGER.info(
                     "Phone Directory: publishing to %s",
                     output,
                 )
 
-                output.publish(contacts)
+                publish(contacts)
 
                 LOGGER.info(
                     "Phone Directory: published successfully to %s (%s contacts)",
@@ -37,5 +53,5 @@ class OutputManager:
                     "Phone Directory: publish failed for %s: %s",
                     output,
                     err,
-                    exc_info=True,
+exc_info=True,
                 )
