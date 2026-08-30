@@ -232,6 +232,11 @@ class PhoneDirectoryOptionsFlowHandler(
 
             return await self.async_step_init()
 
+        defaults = {}
+
+        if definition.get_default is not None:
+            defaults = definition.get_default(self.hass)
+
         schema = {
             vol.Required(
                 "name",
@@ -242,7 +247,10 @@ class PhoneDirectoryOptionsFlowHandler(
         for field in definition.fields:
             current_value = output.data.get(
                 field.key,
-                field.default,
+                defaults.get(
+                    field.key,
+                    field.default,
+                ),
             )
 
             field_schema = (
@@ -385,6 +393,11 @@ class PhoneDirectoryOptionsFlowHandler(
 
             return await self.async_step_init()
 
+        defaults = {}
+
+        if definition.get_default is not None:
+            defaults = definition.get_default(self.hass)
+
         schema = {
             vol.Required(
                 "name",
@@ -393,15 +406,20 @@ class PhoneDirectoryOptionsFlowHandler(
         }
 
         for field in definition.fields:
+            default = defaults.get(
+                field.key,
+                field.default,
+            )
+
             field_schema = (
                 vol.Required(
                     field.key,
-                    default=field.default,
+                    default=default,
                 )
                 if field.required
                 else vol.Optional(
                     field.key,
-                    default=field.default,
+                    default=default,
                 )
             )
 

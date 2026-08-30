@@ -7,6 +7,7 @@ import voluptuous as vol
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, ServiceCall
 
+from .comlink.http import HTTPManager
 from .config_entry_manager import ConfigEntryManager
 from .const import DOMAIN
 from .coordinator import (
@@ -40,6 +41,11 @@ async def async_setup_entry(
         parents=True,
         exist_ok=True,
     )
+
+    http_manager = HTTPManager(hass)
+
+    for output in config_manager.load_outputs():
+        await http_manager.async_register_output(output)
 
     async def async_publish_service(call: ServiceCall) -> None:
         """Publish the phone directory."""

@@ -1,6 +1,11 @@
+"""Grandstream Comlink output."""
+
 import logging
 import xml.etree.ElementTree as ET
-from xml.dom import minidom
+from xml.dom.minidom import parseString
+
+from aiohttp import BasicAuth
+from aiohttp import web
 
 from ...output_models import OutputConfig
 
@@ -16,6 +21,10 @@ class GrandstreamOutput:
 
         self.config = config
 
+        self.http_path = f"/api/phone_directory/{config.output_id}/phonebook.xml"
+
+        self.http_content_type = "application/xml"
+
     def __str__(self) -> str:
         return "Grandstream"
 
@@ -26,6 +35,27 @@ class GrandstreamOutput:
             "Phone Directory: no publish for Grandstream; "
             "Grandstream retrieves the phonebook from the HTTP API",
         )
+
+    def authenticate(self, request: web.Request) -> bool:
+        """Authenticate an HTTP request using Grandstream credentials."""
+
+        userid = self.config.data.get("userid")
+        password = self.config.data.get("password")
+
+        if not userid or not password:
+            LOGGER.error(
+                "Phone Directory: Grandstream output is missing " "HTTP credentials",
+            )
+            return False
+
+        try:
+            auth = BasicAuth.decode(
+                request.headers.get("Authorization", ""),
+            )
+        except ValueError:
+            return False
+
+        return auth.login == userid and auth.password == password
 
     def render(self, contacts) -> str:
         """Generate Grandstream XML from contacts."""
@@ -70,7 +100,7 @@ class GrandstreamOutput:
             encoding="unicode",
         )
 
-        pretty_xml = minidom.parseString(
+        pretty_xml = parseString(
             rough_xml,
         ).toprettyxml(
             indent="    ",

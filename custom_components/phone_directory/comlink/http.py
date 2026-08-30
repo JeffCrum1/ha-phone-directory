@@ -79,6 +79,26 @@ class ComlinkHTTPView(HomeAssistantView):
     ) -> web.Response:
         """Return the current phone directory."""
 
+        authenticate = getattr(
+            self.output,
+            "authenticate",
+            None,
+        )
+
+        if authenticate is not None:
+            authenticated = await self.hass.async_add_executor_job(
+                authenticate,
+                request,
+            )
+
+            if not authenticated:
+                return web.Response(
+                    status=401,
+                    headers={
+                        "WWW-Authenticate": 'Basic realm="Phone Directory"',
+                    },
+                )
+
         contacts = await self.hass.async_add_executor_job(
             self._load_contacts,
         )
@@ -113,13 +133,17 @@ class HTTPManager:
 
         self.hass = hass
 
-    def register_output(
+    async def async_register_output(
         self,
         output_config: OutputConfig,
     ) -> None:
         """Register an output's HTTP endpoint, if it provides one."""
 
-        output = create_output(output_config)
+        output = await self.hass.async_add_executor_job(
+            create_output,
+            output_config,
+        )
+
         resource = get_http_resource(output)
 
         if resource is None:

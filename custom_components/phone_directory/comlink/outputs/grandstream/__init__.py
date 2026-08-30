@@ -1,5 +1,15 @@
+from homeassistant.helpers import network
+
 from ...output_models import OutputConfig, OutputDefinition, OutputField
 from .grandstream import GrandstreamOutput
+
+
+def get_default(hass) -> dict:
+    """Return default Grandstream configuration."""
+
+    return {
+        "base_url": network.get_url(hass),
+    }
 
 
 OUTPUT_DEFINITION = OutputDefinition(
@@ -19,7 +29,14 @@ OUTPUT_DEFINITION = OutputDefinition(
             required=True,
             secret=True,
         ),
+        OutputField(
+            key="base_url",
+            label="Base URL",
+            type="string",
+            required=True,
+        ),
     ),
+    get_default=get_default,
 )
 
 OUTPUT_CLASS = GrandstreamOutput

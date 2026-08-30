@@ -65,3 +65,15 @@ def create_output(config: OutputConfig):
         )
 
     return create(config)
+
+
+async def async_create_output(
+    hass: HomeAssistant,
+    config: OutputConfig,
+):
+    """Create an output instance without blocking Home Assistant."""
+
+    return await hass.async_add_executor_job(
+        create_output,
+        config,
+    )

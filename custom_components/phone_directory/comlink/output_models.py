@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Callable
 
 
 @dataclass(frozen=True)
@@ -21,6 +21,7 @@ class OutputDefinition:
     output_type: str
     label: str
     fields: tuple[OutputField, ...] = ()
+    get_default: Callable[[Any], dict[str, Any]] | None = None
 
 
 @dataclass(frozen=True)
