@@ -21,7 +21,7 @@ class OutputDefinition:
     output_type: str
     label: str
     fields: tuple[OutputField, ...] = ()
-    get_default: Callable[[Any], dict[str, Any]] | None = None
+    get_default: Callable[[Any, str], dict[str, Any]] | None = None
 
 
 @dataclass(frozen=True)

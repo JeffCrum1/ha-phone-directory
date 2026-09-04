@@ -1,5 +1,6 @@
 """HTTP support for Comlink outputs."""
 
+import logging
 from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
@@ -10,6 +11,9 @@ from homeassistant.core import HomeAssistant
 
 from .output_factory import create_output
 from .output_models import OutputConfig
+
+
+LOGGER = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -79,6 +83,13 @@ class ComlinkHTTPView(HomeAssistantView):
     ) -> web.Response:
         """Return the current phone directory."""
 
+        LOGGER.info(
+            "Phone Directory HTTP request: " "ip=%s path=%s user_agent=%s",
+            request.remote,
+            request.path,
+            request.headers.get("User-Agent", "<none>"),
+        )
+
         authenticate = getattr(
             self.output,
             "authenticate",
@@ -89,6 +100,12 @@ class ComlinkHTTPView(HomeAssistantView):
             authenticated = await self.hass.async_add_executor_job(
                 authenticate,
                 request,
+            )
+
+            LOGGER.info(
+                "Phone Directory HTTP authentication: " "ip=%s authenticated=%s",
+                request.remote,
+                authenticated,
             )
 
             if not authenticated:

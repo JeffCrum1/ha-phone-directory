@@ -1,7 +1,5 @@
 """Manage Home Assistant ConfigEntry data for Phone Directory."""
 
-from uuid import uuid4
-
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 
@@ -33,6 +31,7 @@ class ConfigEntryManager:
 
     async def async_add_output(
         self,
+        output_id: str,
         name: str,
         output_type: str,
         data: dict,
@@ -48,7 +47,7 @@ class ConfigEntryManager:
         ]
 
         output = {
-            "output_id": str(uuid4()),
+            "output_id": output_id,
             "name": name,
             "output_type": output_type,
             **data,

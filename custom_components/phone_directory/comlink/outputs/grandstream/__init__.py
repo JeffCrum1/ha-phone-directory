@@ -4,11 +4,16 @@ from ...output_models import OutputConfig, OutputDefinition, OutputField
 from .grandstream import GrandstreamOutput
 
 
-def get_default(hass) -> dict:
+def get_default(hass, output_id: str) -> dict:
     """Return default Grandstream configuration."""
 
+    server_path = network.get_url(hass)
+    server_path = server_path.removeprefix("http://")
+    server_path = server_path.removeprefix("https://")
+    server_path = server_path.rstrip("/")
+
     return {
-        "base_url": network.get_url(hass),
+        "server_path": (f"{server_path}/api/phone_directory/{output_id}"),
     }
 
 
@@ -30,8 +35,8 @@ OUTPUT_DEFINITION = OutputDefinition(
             secret=True,
         ),
         OutputField(
-            key="base_url",
-            label="Base URL",
+            key="server_path",
+            label="Server Path",
             type="string",
             required=True,
         ),

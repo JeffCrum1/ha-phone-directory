@@ -1,3 +1,5 @@
+from uuid import uuid4
+
 from homeassistant import config_entries
 import voluptuous as vol
 from homeassistant.helpers.selector import (
@@ -52,6 +54,7 @@ class PhoneDirectoryOptionsFlowHandler(
 
         self._selected_output_id = None
         self._selected_output_type = None
+        self._new_output_id = None
 
     async def async_step_init(self, user_input=None):
         """Manage Phone Directory options."""
@@ -235,7 +238,10 @@ class PhoneDirectoryOptionsFlowHandler(
         defaults = {}
 
         if definition.get_default is not None:
-            defaults = definition.get_default(self.hass)
+            defaults = definition.get_default(
+                self.hass,
+                output.output_id,
+            )
 
         schema = {
             vol.Required(
@@ -357,6 +363,9 @@ class PhoneDirectoryOptionsFlowHandler(
         if self._selected_output_type is None:
             return await self.async_step_add_output()
 
+        if self._new_output_id is None:
+            self._new_output_id = str(uuid4())
+
         definitions = await async_get_output_definitions(
             self.hass,
         )
@@ -372,6 +381,7 @@ class PhoneDirectoryOptionsFlowHandler(
 
         if definition is None:
             self._selected_output_type = None
+            self._new_output_id = None
             return await self.async_step_add_output()
 
         if user_input is not None:
@@ -384,19 +394,24 @@ class PhoneDirectoryOptionsFlowHandler(
             }
 
             await config_manager.async_add_output(
+                output_id=self._new_output_id,
                 name=user_input["name"],
                 output_type=definition.output_type,
                 data=output_data,
             )
 
             self._selected_output_type = None
+            self._new_output_id = None
 
             return await self.async_step_init()
 
         defaults = {}
 
         if definition.get_default is not None:
-            defaults = definition.get_default(self.hass)
+            defaults = definition.get_default(
+                self.hass,
+                self._new_output_id,
+            )
 
         schema = {
             vol.Required(
