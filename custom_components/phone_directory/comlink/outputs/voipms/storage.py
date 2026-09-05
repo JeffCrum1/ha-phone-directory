@@ -1,11 +1,13 @@
 """Persistent state for the VoIP.ms output."""
 
 import json
+import os
 from pathlib import Path
 
 
 DATA_DIR = Path("/config/phone_directory_data")
 DATA_FILE = DATA_DIR / "voipms.json"
+TEMP_FILE = DATA_DIR / "voipms.json.tmp"
 
 
 def load_mappings() -> dict[str, str]:
@@ -39,7 +41,7 @@ def save_mappings(mappings: dict[str, str]) -> None:
         exist_ok=True,
     )
 
-    with open(DATA_FILE, "w", encoding="utf-8") as f:
+    with open(TEMP_FILE, "w", encoding="utf-8") as f:
         json.dump(
             {
                 "contacts": mappings,
@@ -48,6 +50,16 @@ def save_mappings(mappings: dict[str, str]) -> None:
             indent=2,
             ensure_ascii=False,
         )
+        f.flush()
+        os.fsync(f.fileno())
+
+    os.replace(TEMP_FILE, DATA_FILE)
+
+    dir_fd = os.open(DATA_DIR, os.O_RDONLY)
+    try:
+        os.fsync(dir_fd)
+    finally:
+        os.close(dir_fd)
 
 
 def get_phonebook_id(contact_id: str) -> str | None:

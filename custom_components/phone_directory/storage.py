@@ -1,4 +1,5 @@
 import json
+import os
 from dataclasses import asdict
 from pathlib import Path
 from uuid import uuid4
@@ -7,6 +8,7 @@ from .models import Contact
 
 DATA_DIR = Path("/config/phone_directory_data")
 DATA_FILE = DATA_DIR / "contacts.json"
+TEMP_FILE = DATA_DIR / "contacts.json.tmp"
 
 
 def load_contacts() -> list[Contact]:
@@ -49,7 +51,7 @@ def save_contacts(contacts: list[Contact]) -> None:
         exist_ok=True,
     )
 
-    with open(DATA_FILE, "w", encoding="utf-8") as f:
+    with open(TEMP_FILE, "w", encoding="utf-8") as f:
         json.dump(
             {
                 "contacts": [asdict(contact) for contact in contacts],
@@ -58,6 +60,16 @@ def save_contacts(contacts: list[Contact]) -> None:
             indent=2,
             ensure_ascii=False,
         )
+        f.flush()
+        os.fsync(f.fileno())
+
+    os.replace(TEMP_FILE, DATA_FILE)
+
+    dir_fd = os.open(DATA_DIR, os.O_RDONLY)
+    try:
+        os.fsync(dir_fd)
+    finally:
+        os.close(dir_fd)
 
 
 def get_contact(contact_id: str) -> Contact:
