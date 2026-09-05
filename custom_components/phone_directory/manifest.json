@@ -5,5 +5,8 @@
   "documentation": "https://github.com/jeffcrum1/ha-phone-directory",
   "requirements": [],
   "codeowners": [],
-  "config_flow": true
+  "config_flow": true,
+  "after_dependencies": [
+    "lovelace"
+  ]
 }

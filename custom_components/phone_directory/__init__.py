@@ -4,10 +4,10 @@ import logging
 from pathlib import Path
 
 import voluptuous as vol
-
 from homeassistant.components import websocket_api as ha_websocket_api
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, ServiceCall
+from homeassistant.exceptions import ServiceValidationError
 
 from .comlink.http import HTTPManager
 from .config_entry_manager import ConfigEntryManager
@@ -18,6 +18,8 @@ from .coordinator import (
     delete_directory_contact,
     publish_directory,
 )
+from .onscreen import async_remove as async_remove_onscreen
+from .onscreen import async_setup as async_setup_onscreen
 from .websocket_api import websocket_get_contacts
 
 
@@ -60,6 +62,10 @@ async def async_setup_entry(
         exist_ok=True,
     )
 
+    await async_setup_onscreen(
+        hass,
+    )
+
     http_manager = HTTPManager(hass)
 
     for output in config_manager.load_outputs():
@@ -90,10 +96,9 @@ async def async_setup_entry(
                 call.data["number"],
             )
         except ValueError as err:
-            LOGGER.error(
-                "Phone Directory: %s",
-                err,
-            )
+            raise ServiceValidationError(
+                str(err),
+            ) from err
 
     async def async_delete_contact_service(call: ServiceCall) -> None:
         """Delete a phone directory contact."""
@@ -104,10 +109,9 @@ async def async_setup_entry(
                 call.data["contact_id"],
             )
         except ValueError as err:
-            LOGGER.error(
-                "Phone Directory: %s",
-                err,
-            )
+            raise ServiceValidationError(
+                str(err),
+            ) from err
 
     async def async_change_contact_service(call: ServiceCall) -> None:
         """Change a phone directory contact."""
@@ -120,10 +124,9 @@ async def async_setup_entry(
                 call.data["number"],
             )
         except ValueError as err:
-            LOGGER.error(
-                "Phone Directory: %s",
-                err,
-            )
+            raise ServiceValidationError(
+                str(err),
+            ) from err
 
     hass.services.async_register(
         DOMAIN,
@@ -170,3 +173,19 @@ async def async_setup_entry(
     LOGGER.info("Phone Directory setup complete")
 
     return True
+
+
+async def async_remove_entry(
+    hass: HomeAssistant,
+    entry: ConfigEntry,
+) -> None:
+    """Remove a Phone Directory config entry."""
+
+    await async_remove_onscreen(
+        hass,
+    )
+
+    hass.data[DOMAIN].pop(
+        entry.entry_id,
+        None,
+    )
