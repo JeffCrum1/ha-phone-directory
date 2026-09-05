@@ -65,10 +65,24 @@ class PhoneDirectoryOptionsFlowHandler(
 
         outputs = config_manager.load_outputs()
 
+        definitions = await async_get_output_definitions(
+            self.hass,
+        )
+
+        configured_output_types = {output.output_type for output in outputs}
+
+        available_definitions = [
+            definition
+            for definition in definitions
+            if definition.output_type not in configured_output_types
+        ]
+
         menu_options = {
             "configure_output": "Configure Output",
-            "add_output": "Add Output",
         }
+
+        if available_definitions:
+            menu_options["add_output"] = "Add Output"
 
         if not outputs:
             menu_options.pop("configure_output")
@@ -323,9 +337,26 @@ class PhoneDirectoryOptionsFlowHandler(
     async def async_step_add_output(self, user_input=None):
         """Select an output type to add."""
 
+        config_manager: ConfigEntryManager = self.hass.data[DOMAIN][
+            self.config_entry.entry_id
+        ]
+
+        outputs = config_manager.load_outputs()
+
         definitions = await async_get_output_definitions(
             self.hass,
         )
+
+        configured_output_types = {output.output_type for output in outputs}
+
+        available_definitions = [
+            definition
+            for definition in definitions
+            if definition.output_type not in configured_output_types
+        ]
+
+        if not available_definitions:
+            return await self.async_step_init()
 
         if user_input is not None:
             self._selected_output_type = user_input["output_type"]
@@ -337,7 +368,7 @@ class PhoneDirectoryOptionsFlowHandler(
                 value=definition.output_type,
                 label=definition.label,
             )
-            for definition in definitions
+            for definition in available_definitions
         ]
 
         return self.async_show_form(
