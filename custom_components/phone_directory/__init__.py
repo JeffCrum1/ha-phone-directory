@@ -4,6 +4,8 @@ import logging
 from pathlib import Path
 
 import voluptuous as vol
+
+from homeassistant.components import websocket_api as ha_websocket_api
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, ServiceCall
 
@@ -16,10 +18,26 @@ from .coordinator import (
     delete_directory_contact,
     publish_directory,
 )
+from .websocket_api import websocket_get_contacts
+
 
 DATA_DIR = Path("/config/phone_directory_data")
 
 LOGGER = logging.getLogger(__name__)
+
+
+async def async_setup(
+    hass: HomeAssistant,
+    config: dict,
+) -> bool:
+    """Set up the Phone Directory integration."""
+
+    ha_websocket_api.async_register_command(
+        hass,
+        websocket_get_contacts,
+    )
+
+    return True
 
 
 async def async_setup_entry(
