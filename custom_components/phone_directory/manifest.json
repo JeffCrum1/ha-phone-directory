@@ -6,6 +6,7 @@
   "requirements": [],
   "codeowners": [],
   "config_flow": true,
+  "single_config_entry": true,
   "after_dependencies": [
     "lovelace"
   ]
