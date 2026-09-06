@@ -4,7 +4,7 @@ Comlink is the output engine for the Phone Directory integration.
 
 Its job is simple:
 
-> Take the phone directory maintained by Home Assistant and publish it to one or more external destinations.
+> Take the phone directory maintained by Home Assistant and make that current state available to the destinations that use it.
 
 Comlink is intentionally independent of Home Assistant. Home Assistant provides the directory data and configuration; Comlink handles the work of turning that data into whatever format or service an output requires.
 
@@ -32,6 +32,49 @@ Comlink does not need to know how Home Assistant works.
 
 That separation is intentional.
 
+## Source of Truth
+
+Home Assistant is the **source of truth** for the phone directory.
+
+Comlink and its outputs do not maintain an independent copy of the directory. They receive or retrieve the current directory and use that state to determine what their destination should look like.
+
+This distinction is important.
+
+Comlink is not an event-forwarding system that asks:
+
+> “What changed?”
+
+Instead, the question is:
+
+> **“Given the current directory, what should this destination look like?”**
+
+## Complete State
+
+When Comlink publishes the directory to an output, the output is given the **complete current state** of the directory.
+
+An output should be able to build or reconcile its destination from that state without depending on a previous Comlink run or a previous output artifact.
+
+This makes synchronization **self-healing rather than event forwarding**.
+
+If the destination has drifted from the desired state, the output can correct it the next time synchronization occurs.
+
+An output does not need to know why the destination is wrong. It only needs to make the destination match the current desired state.
+
+## Push and Pull
+
+Outputs may use either a **push** or **pull** synchronization model.
+
+Push and pull describe **who initiates synchronization**, not where the data comes from.
+
+The source of truth remains Home Assistant in either case.
+
+For example:
+
+* **Grandstream is pull-based.** The Grandstream device reaches into Phone Directory through Comlink and retrieves the current phonebook.
+* **VoIP.ms is push-based.** Phone Directory sends the current desired directory to VoIP.ms and reconciles the remote phonebook.
+
+The synchronization direction can therefore vary by output without changing the underlying ownership of the data.
+
 ## Outputs
 
 Every output lives in its own directory under:
@@ -55,9 +98,46 @@ An output package owns everything specific to that output:
 * Its implementation
 * Its configuration definition
 * Its construction logic
+* Its synchronization behavior
 * Its documentation
 
 This keeps output-specific knowledge out of Comlink's core.
+
+## The Output Contract
+
+An output's fundamental responsibility is:
+
+> **Given the current Phone Directory state, make the destination match that state.**
+
+The output may need to:
+
+* Transform the directory into another format
+* Create destination records
+* Update existing records
+* Remove records that should no longer exist
+* Reconcile differences between the desired state and the destination
+* Maintain destination-specific relationship or state information when necessary
+
+The output owns the details of how that is accomplished.
+
+Comlink provides the current directory state and the framework for invoking the output. It does not attempt to understand the details of each destination.
+
+## State Validation
+
+Comlink validates the state it depends on before modifying a destination.
+
+It does not attempt to repair impossible internal state.
+
+External destination state is allowed to be wrong. That is part of what synchronization is designed to handle.
+
+Internal relationship state used by an output must remain valid.
+
+An output should distinguish between:
+
+* **External drift**, which can normally be reconciled
+* **Invalid internal state**, which should be reported as an error rather than guessed at or silently repaired
+
+This keeps synchronization predictable and prevents an output from hiding a problem in its own state.
 
 ## Self-Describing Outputs
 
@@ -167,13 +247,13 @@ For example:
 {
     "output_id": "example-id",
     "name": "House Phones",
-    "output_type": "grandstream",
-    "directory": "/config/www",
-    "filename": "phonebook.xml"
+    "output_type": "example"
 }
 ```
 
 The exact configuration fields are defined by the output's `OUTPUT_DEFINITION`.
+
+Comlink does not assume that different outputs use the same configuration fields.
 
 ## Output Documentation
 
@@ -187,6 +267,7 @@ The output README should explain:
 * Any output-specific requirements
 * Any external service or device requirements
 * Any limitations or special behavior
+* How the output synchronizes with its destination
 
 The Comlink README explains **how outputs work**.
 
@@ -200,6 +281,6 @@ The goal of Comlink is not to predict every possible output.
 
 The goal is to make adding the next output boring.
 
-If someone wants to add another destination, they should be able to create an output package, describe its configuration, implement its publishing behavior, document it, and let Comlink discover it.
+If someone wants to add another destination, they should be able to create an output package, describe its configuration, implement its synchronization behavior, document it, and let Comlink discover it.
 
 The core should not need to know its name.
