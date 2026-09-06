@@ -4,9 +4,12 @@
   "version": "0.1.7",
   "documentation": "https://github.com/jeffcrum1/ha-phone-directory",
   "requirements": [],
-  "codeowners": [],
+  "codeowners": [
+    "@JeffCrum1"
+  ],
   "config_flow": true,
   "single_config_entry": true,
+  "issue_tracker": "https://github.com/JeffCrum1/ha-phone-directory/issues",
   "after_dependencies": [
     "lovelace"
   ]
