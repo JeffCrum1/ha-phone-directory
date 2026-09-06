@@ -29,7 +29,7 @@ Currently, Phone Directory supports:
 
 If you use those systems, you're ready to go.
 
-If you have different hardware or a different service and want to connect it to Phone Directory, the project is designed to be extended. See the [Comlink documentation](comlink/README.md) for more information.
+If you have different hardware or a different service and want to connect it to Phone Directory, the project is designed to be extended. See the [Comlink documentation](custom_components/phone_directory/comlink/README.md) for more information.
 
 # Installation
 
