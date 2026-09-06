@@ -4,6 +4,3 @@ __pycache__/
 .idea/
 .vscode/
 .venv/
-contacts.json
-outputs.json
-notes*
