@@ -1,60 +1,59 @@
 class PhoneDirectoryCard extends HTMLElement {
-    constructor() {
-        super();
+  constructor() {
+    super();
 
-        this.attachShadow({ mode: "open" });
+    this.attachShadow({ mode: "open" });
 
-        this._hass = null;
-        this._config = {};
-        this._contacts = [];
-        this._loaded = false;
-        this._dialog = null;
+    this._hass = null;
+    this._config = {};
+    this._contacts = [];
+    this._loaded = false;
+    this._dialog = null;
+  }
+
+  setConfig(config) {
+    this._config = config || {};
+  }
+
+  set hass(hass) {
+    this._hass = hass;
+
+    if (!this._loaded) {
+      this._loadContacts();
+    }
+  }
+
+  get hass() {
+    return this._hass;
+  }
+
+  async _loadContacts() {
+    if (!this._hass) {
+      return;
     }
 
-    setConfig(config) {
-        this._config = config || {};
+    try {
+      const result = await this._hass.connection.sendMessagePromise({
+        type: "phone_directory/get_contacts",
+      });
+
+      this._contacts = result.contacts || [];
+      this._loaded = true;
+      this._renderContacts();
+    } catch (error) {
+      console.error("Phone Directory: failed to load contacts", error);
+      this._renderError();
     }
+  }
 
-    set hass(hass) {
-        this._hass = hass;
+  _renderContacts() {
+    const contacts = [...this._contacts].sort((a, b) =>
+      a.name.localeCompare(b.name)
+    );
 
-        if (!this._loaded) {
-            this._loadContacts();
-        }
-    }
-
-    get hass() {
-        return this._hass;
-    }
-
-    async _loadContacts() {
-        if (!this._hass) {
-            return;
-        }
-
-        try {
-            const result = await this._hass.connection.sendMessagePromise({
-                type: "phone_directory/get_contacts",
-            });
-
-            this._contacts = result.contacts || [];
-            this._loaded = true;
-
-            this._renderContacts();
-        } catch (error) {
-            console.error("Phone Directory: failed to load contacts", error);
-            this._renderError();
-        }
-    }
-
-    _renderContacts() {
-        const contacts = [...this._contacts].sort((a, b) =>
-            a.name.localeCompare(b.name)
-        );
-
-        const rows = contacts
-            .map(
-                (contact) => `
+    const rows = contacts
+      .map(
+        (contact) => `
           <div
             class="contact-row"
             data-contact-id="${this._escapeHtml(contact.contact_id)}"
@@ -67,25 +66,31 @@ class PhoneDirectoryCard extends HTMLElement {
             </span>
           </div>
         `
-            )
-            .join("");
+      )
+      .join("");
 
-        const emptyState =
-            contacts.length === 0
-                ? `
+    const emptyState =
+      contacts.length === 0
+        ? `
           <div class="empty-state">
             No contacts in the directory.
           </div>
         `
-                : "";
+        : "";
 
-        this.shadowRoot.innerHTML = `
+    this.shadowRoot.innerHTML = `
       <ha-card>
         <div class="card-header">
           <div class="card-title">Phone Directory</div>
-          <button class="add-button" id="add-contact">
-            + Add Contact
-          </button>
+
+          <div class="card-actions">
+            <button class="card-action-button" id="add-contact">
+              + Add Contact
+            </button>
+            <button class="card-action-button" id="publish">
+              Publish
+            </button>
+          </div>
         </div>
 
         <div class="contacts">
@@ -108,6 +113,7 @@ class PhoneDirectoryCard extends HTMLElement {
           align-items: center;
           justify-content: space-between;
           padding: 16px;
+          gap: 16px;
         }
 
         .card-title {
@@ -115,7 +121,13 @@ class PhoneDirectoryCard extends HTMLElement {
           font-weight: 500;
         }
 
-        .add-button {
+        .card-actions {
+          display: flex;
+          align-items: center;
+          gap: 4px;
+        }
+
+        .card-action-button {
           border: none;
           background: none;
           color: var(--primary-color);
@@ -124,9 +136,10 @@ class PhoneDirectoryCard extends HTMLElement {
           cursor: pointer;
           padding: 8px;
           border-radius: 4px;
+          white-space: nowrap;
         }
 
-        .add-button:hover {
+        .card-action-button:hover {
           background: var(--secondary-background-color);
         }
 
@@ -261,21 +274,37 @@ class PhoneDirectoryCard extends HTMLElement {
       </style>
     `;
 
-        this.shadowRoot
-            .querySelector("#add-contact")
-            ?.addEventListener("click", () => {
-                this._openAddDialog();
-            });
+    this.shadowRoot
+      .querySelector("#add-contact")
+      ?.addEventListener("click", () => {
+        this._openAddDialog();
+      });
 
-        this.shadowRoot.querySelectorAll(".contact-row").forEach((row) => {
-            row.addEventListener("click", () => {
-                this._openEditDialog(row.dataset.contactId);
-            });
-        });
-    }
+    this.shadowRoot
+      .querySelector("#publish")
+      ?.addEventListener("click", async () => {
+        try {
+          await this._hass.callService(
+            "phone_directory",
+            "publish"
+          );
+        } catch (error) {
+          console.error(
+            "Phone Directory: failed to publish",
+            error
+          );
+        }
+      });
 
-    _renderError() {
-        this.shadowRoot.innerHTML = `
+    this.shadowRoot.querySelectorAll(".contact-row").forEach((row) => {
+      row.addEventListener("click", () => {
+        this._openEditDialog(row.dataset.contactId);
+      });
+    });
+  }
+
+  _renderError() {
+    this.shadowRoot.innerHTML = `
       <ha-card>
         <div class="card-header">
           <div class="card-title">Phone Directory</div>
@@ -287,15 +316,15 @@ class PhoneDirectoryCard extends HTMLElement {
         </div>
       </ha-card>
     `;
-    }
+  }
 
-    _openAddDialog() {
-        this._closeDialog();
+  _openAddDialog() {
+    this._closeDialog();
 
-        const backdrop = document.createElement("div");
-        backdrop.className = "dialog-backdrop";
+    const backdrop = document.createElement("div");
+    backdrop.className = "dialog-backdrop";
 
-        backdrop.innerHTML = `
+    backdrop.innerHTML = `
       <div class="dialog">
         <div class="dialog-title">Add Contact</div>
 
@@ -326,80 +355,79 @@ class PhoneDirectoryCard extends HTMLElement {
       </div>
     `;
 
-        this.shadowRoot.appendChild(backdrop);
-        this._dialog = backdrop;
+    this.shadowRoot.appendChild(backdrop);
+    this._dialog = backdrop;
 
-        backdrop.querySelector("#cancel").addEventListener("click", () => {
-            this._closeDialog();
-        });
+    backdrop.querySelector("#cancel").addEventListener("click", () => {
+      this._closeDialog();
+    });
 
-        backdrop.querySelector("#save").addEventListener("click", async () => {
-            await this._saveNewContact();
-        });
+    backdrop.querySelector("#save").addEventListener("click", async () => {
+      await this._saveNewContact();
+    });
 
-        backdrop.addEventListener("click", (event) => {
-            if (event.target === backdrop) {
-                this._closeDialog();
-            }
-        });
-
-        const nameInput = backdrop.querySelector("#contact-name");
-        nameInput.focus();
-    }
-
-    async _saveNewContact() {
-        const nameInput = this._dialog.querySelector("#contact-name");
-        const numberInput = this._dialog.querySelector("#contact-number");
-        const errorElement = this._dialog.querySelector("#dialog-error");
-
-        const name = nameInput.value.trim();
-        const number = numberInput.value.trim();
-
-        errorElement.hidden = true;
-
-        if (!name || !number) {
-            errorElement.textContent = "Name and number are required.";
-            errorElement.hidden = false;
-            return;
-        }
-
-        try {
-            await this._hass.callService(
-                "phone_directory",
-                "add_contact",
-                {
-                    name,
-                    number,
-                }
-            );
-
-            this._closeDialog();
-
-            this._loaded = false;
-            await this._loadContacts();
-        } catch (error) {
-            console.error("Phone Directory: failed to add contact", error);
-
-            errorElement.textContent = this._getServiceErrorMessage(error);
-            errorElement.hidden = false;
-        }
-    }
-
-    _openEditDialog(contactId) {
-        const contact = this._contacts.find(
-            (item) => item.contact_id === contactId
-        );
-
-        if (!contact) {
-            return;
-        }
-
+    backdrop.addEventListener("click", (event) => {
+      if (event.target === backdrop) {
         this._closeDialog();
+      }
+    });
 
-        const backdrop = document.createElement("div");
-        backdrop.className = "dialog-backdrop";
+    const nameInput = backdrop.querySelector("#contact-name");
+    nameInput.focus();
+  }
 
-        backdrop.innerHTML = `
+  async _saveNewContact() {
+    const nameInput = this._dialog.querySelector("#contact-name");
+    const numberInput = this._dialog.querySelector("#contact-number");
+    const errorElement = this._dialog.querySelector("#dialog-error");
+
+    const name = nameInput.value.trim();
+    const number = numberInput.value.trim();
+
+    errorElement.hidden = true;
+
+    if (!name || !number) {
+      errorElement.textContent = "Name and number are required.";
+      errorElement.hidden = false;
+      return;
+    }
+
+    try {
+      await this._hass.callService(
+        "phone_directory",
+        "add_contact",
+        {
+          name,
+          number,
+        }
+      );
+
+      this._closeDialog();
+      this._loaded = false;
+      await this._loadContacts();
+    } catch (error) {
+      console.error("Phone Directory: failed to add contact", error);
+
+      errorElement.textContent = this._getServiceErrorMessage(error);
+      errorElement.hidden = false;
+    }
+  }
+
+  _openEditDialog(contactId) {
+    const contact = this._contacts.find(
+      (item) => item.contact_id === contactId
+    );
+
+    if (!contact) {
+      return;
+    }
+
+    this._closeDialog();
+
+    const backdrop = document.createElement("div");
+    backdrop.className = "dialog-backdrop";
+
+    backdrop.innerHTML = `
       <div class="dialog">
         <div class="dialog-title">Edit Contact</div>
 
@@ -433,84 +461,83 @@ class PhoneDirectoryCard extends HTMLElement {
       </div>
     `;
 
-        this.shadowRoot.appendChild(backdrop);
-        this._dialog = backdrop;
+    this.shadowRoot.appendChild(backdrop);
+    this._dialog = backdrop;
 
-        backdrop.querySelector("#cancel").addEventListener("click", () => {
-            this._closeDialog();
-        });
+    backdrop.querySelector("#cancel").addEventListener("click", () => {
+      this._closeDialog();
+    });
 
-        backdrop.querySelector("#save").addEventListener("click", async () => {
-            await this._saveContact(contactId);
-        });
+    backdrop.querySelector("#save").addEventListener("click", async () => {
+      await this._saveContact(contactId);
+    });
 
-        backdrop.querySelector("#delete").addEventListener("click", () => {
-            this._openDeleteConfirmation(contactId);
-        });
+    backdrop.querySelector("#delete").addEventListener("click", () => {
+      this._openDeleteConfirmation(contactId);
+    });
 
-        backdrop.addEventListener("click", (event) => {
-            if (event.target === backdrop) {
-                this._closeDialog();
-            }
-        });
-
-        backdrop.querySelector("#contact-name").focus();
-    }
-
-    async _saveContact(contactId) {
-        const nameInput = this._dialog.querySelector("#contact-name");
-        const numberInput = this._dialog.querySelector("#contact-number");
-        const errorElement = this._dialog.querySelector("#dialog-error");
-
-        const name = nameInput.value.trim();
-        const number = numberInput.value.trim();
-
-        errorElement.hidden = true;
-
-        if (!name || !number) {
-            errorElement.textContent = "Name and number are required.";
-            errorElement.hidden = false;
-            return;
-        }
-
-        try {
-            await this._hass.callService(
-                "phone_directory",
-                "change_contact",
-                {
-                    contact_id: contactId,
-                    name,
-                    number,
-                }
-            );
-
-            this._closeDialog();
-
-            this._loaded = false;
-            await this._loadContacts();
-        } catch (error) {
-            console.error("Phone Directory: failed to save contact", error);
-
-            errorElement.textContent = this._getServiceErrorMessage(error);
-            errorElement.hidden = false;
-        }
-    }
-
-    _openDeleteConfirmation(contactId) {
-        const contact = this._contacts.find(
-            (item) => item.contact_id === contactId
-        );
-
-        if (!contact) {
-            return;
-        }
-
+    backdrop.addEventListener("click", (event) => {
+      if (event.target === backdrop) {
         this._closeDialog();
+      }
+    });
 
-        const backdrop = document.createElement("div");
-        backdrop.className = "dialog-backdrop";
+    backdrop.querySelector("#contact-name").focus();
+  }
 
-        backdrop.innerHTML = `
+  async _saveContact(contactId) {
+    const nameInput = this._dialog.querySelector("#contact-name");
+    const numberInput = this._dialog.querySelector("#contact-number");
+    const errorElement = this._dialog.querySelector("#dialog-error");
+
+    const name = nameInput.value.trim();
+    const number = numberInput.value.trim();
+
+    errorElement.hidden = true;
+
+    if (!name || !number) {
+      errorElement.textContent = "Name and number are required.";
+      errorElement.hidden = false;
+      return;
+    }
+
+    try {
+      await this._hass.callService(
+        "phone_directory",
+        "change_contact",
+        {
+          contact_id: contactId,
+          name,
+          number,
+        }
+      );
+
+      this._closeDialog();
+      this._loaded = false;
+      await this._loadContacts();
+    } catch (error) {
+      console.error("Phone Directory: failed to save contact", error);
+
+      errorElement.textContent = this._getServiceErrorMessage(error);
+      errorElement.hidden = false;
+    }
+  }
+
+  _openDeleteConfirmation(contactId) {
+    const contact = this._contacts.find(
+      (item) => item.contact_id === contactId
+    );
+
+    if (!contact) {
+      return;
+    }
+
+    this._closeDialog();
+
+    const backdrop = document.createElement("div");
+    backdrop.className = "dialog-backdrop";
+
+    backdrop.innerHTML = `
       <div class="dialog">
         <div class="dialog-title">Delete Contact</div>
 
@@ -526,67 +553,67 @@ class PhoneDirectoryCard extends HTMLElement {
       </div>
     `;
 
-        this.shadowRoot.appendChild(backdrop);
-        this._dialog = backdrop;
+    this.shadowRoot.appendChild(backdrop);
+    this._dialog = backdrop;
 
-        backdrop.querySelector("#cancel").addEventListener("click", () => {
-            this._closeDialog();
-            this._openEditDialog(contactId);
-        });
+    backdrop.querySelector("#cancel").addEventListener("click", () => {
+      this._closeDialog();
+      this._openEditDialog(contactId);
+    });
 
-        backdrop
-            .querySelector("#confirm-delete")
-            .addEventListener("click", async () => {
-                await this._deleteContact(contactId);
-            });
+    backdrop
+      .querySelector("#confirm-delete")
+      .addEventListener("click", async () => {
+        await this._deleteContact(contactId);
+      });
 
-        backdrop.addEventListener("click", (event) => {
-            if (event.target === backdrop) {
-                this._closeDialog();
-                this._openEditDialog(contactId);
-            }
-        });
-    }
+    backdrop.addEventListener("click", (event) => {
+      if (event.target === backdrop) {
+        this._closeDialog();
+        this._openEditDialog(contactId);
+      }
+    });
+  }
 
-    async _deleteContact(contactId) {
-        try {
-            await this._hass.callService(
-                "phone_directory",
-                "delete_contact",
-                {
-                    contact_id: contactId,
-                }
-            );
-
-            this._closeDialog();
-
-            this._loaded = false;
-            await this._loadContacts();
-        } catch (error) {
-            console.error("Phone Directory: failed to delete contact", error);
+  async _deleteContact(contactId) {
+    try {
+      await this._hass.callService(
+        "phone_directory",
+        "delete_contact",
+        {
+          contact_id: contactId,
         }
+      );
+
+      this._closeDialog();
+
+      this._loaded = false;
+      await this._loadContacts();
+    } catch (error) {
+      console.error("Phone Directory: failed to delete contact", error);
+    }
+  }
+
+  _getServiceErrorMessage(error) {
+    if (error?.message) {
+      return error.message.replace(/^Validation error:\s*/i, "");
     }
 
-    _getServiceErrorMessage(error) {
-        if (error?.message) {
-            return error.message.replace(/^Validation error:\s*/i, "");
-        }
+    return "Unable to complete the operation.";
+  }
 
-        return "Unable to complete the operation.";
+  _closeDialog() {
+    if (this._dialog) {
+      this._dialog.remove();
+      this._dialog = null;
     }
+  }
 
-    _closeDialog() {
-        if (this._dialog) {
-            this._dialog.remove();
-            this._dialog = null;
-        }
-    }
-
-    _escapeHtml(value) {
-        const element = document.createElement("div");
-        element.textContent = value;
-        return element.innerHTML;
-    }
+  _escapeHtml(value) {
+    const element = document.createElement("div");
+    element.textContent = value;
+    return element.innerHTML;
+  }
 }
 
 customElements.define("phone-directory-card", PhoneDirectoryCard);
